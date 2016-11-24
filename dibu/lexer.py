@@ -27,8 +27,7 @@ tokens = [
     'LBRACKET',
     'RBRACKET',
     'LPAREN',
-    'RPAREN',
-    'NEWLINE'
+    'RPAREN'
 ]
 
 
@@ -69,7 +68,7 @@ def t_NEWLINE(t):
 t_ignore = ' \t'
 
 # Build the lexer
-lexer = lex.lex(debug=True)
+lexer = lex.lex()
 
 
 def apply(string):
