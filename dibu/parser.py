@@ -1,5 +1,5 @@
 import ply.yacc as yacc
-from lexer import *
+from .lexer import *
 
 
 required = {
@@ -50,6 +50,8 @@ common = {
     'stroke-width': int
 }
 
+class SemanticException(Exception):
+    pass
 
 def type_assert(a, b):
     if type(b) == tuple:
@@ -77,19 +79,19 @@ def type_assert(a, b):
 
 def p_statement(subexpressions):
     '''statement : expression
-                 | expression statement'''
+                 | statement expression'''
 
-    subexpressions[0] = [subexpressions[1]]
 
     if len(subexpressions) == 3:
-        subexpressions[0] += subexpressions[2]
+        subexpressions[0] = [subexpressions[2]]
+        subexpressions[0] += subexpressions[1]
 
-        if subexpressions[1][0] == 'size':
-            for entry in subexpressions[2]:
+        if subexpressions[2][0] == 'size':
+            for entry in subexpressions[1]:
                 if entry[0] == 'size':
-                    # TODO: Size llamado mas de una vez
-                    assert False
-
+                    raise SemanticException("Size defined twice.")
+    else:
+        subexpressions[0] = [subexpressions[1]]
 
 def p_expression(subexpressions):
     'expression : IDENTIFIER key_value_list'
@@ -97,20 +99,30 @@ def p_expression(subexpressions):
 
     (identifier, arguments) = subexpressions[0]
 
+    unmet_requirements = []
     for key in required[identifier]:
-        assert key in arguments
+        if not key in arguments:
+            unmet_requirements.append(key)
+
+    if len(unmet_requirements) > 0:
+        raise SemanticException("Parameters {} need to be defined for {}".format(unmet_requirements, identifier))
 
     # Check types and key validity
     for key in arguments:
         if key in common:
-            assert type_assert(arguments[key], common[key])
+            if type_assert(arguments[key], common[key]):
+                return
+            raise SemanticException("Type of parameter {} for {} is {}, not {}".format(key, identifier, common[key], arguments[key]))
         elif key in required[identifier]:
-            assert type_assert(arguments[key], required[identifier][key])
+            if type_assert(arguments[key], required[identifier][key]):
+                return
+            raise SemanticException("Type of parameter {} for {} is {}, not {}".format(key, identifier, required[key], arguments[key]))
         elif identifier in optional and key in optional[identifier]:
-            assert type_assert(arguments[key], optional[identifier][key])
+            if type_assert(arguments[key], optional[identifier][key]):
+                return
+            raise SemanticException("Type of parameter {} for {} is {}, not {}".format(key, identifier, optional[identifier][key], arguments[key]))
         else:
-            # TODO: Mensaje de error, la clave no existe.
-            assert False
+            raise SemanticException("Unknown parameter {} for {}.".format(key, identifier))
 
 def p_key_value_list(subexpressions):
     '''key_value_list : key_value_entry COMMA key_value_list
@@ -173,7 +185,74 @@ parser = yacc.yacc()
 
 def parse(str):
     """Dado un string, me lo convierte a SVG."""
-    return parser.parse(str)
+    document = parser.parse(str)
+
+    canvas = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">\n'
+    shapes = []
+
+    for key, value in reversed(document):
+        if key == 'size':
+            canvas = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="{}" height="{}">\n'.format(value['width'], value['height'])
+            continue
+        if key == 'rectangle':
+            element = '<rect x="{}" y="{}" height="{}" width="{}"'.format(
+                value['upper_left'][0],
+                value['upper_left'][1],
+                value['height'],
+                value['width']
+            )
+        elif key == 'line':
+            element = '<line x1="{}" y1="{}" x2="{}" y2="{}"'.format(
+                value['from'][0],
+                value['from'][1],
+                value['to'][0],
+                value['to'][1]
+            )
+        elif key == 'circle':
+            element = '<circle cx="{}" cy="{}" r="{}"'.format(
+                value['center'][0],
+                value['center'][1],
+                value['radius']
+            )
+        elif key == 'ellipse':
+            element = '<ellipse cx="{}" cy="{}" rx="{}" ry="{}"'.format(
+                value['center'][0],
+                value['center'][1],
+                value['rx'],
+                value['ry']
+            )
+        elif key == 'polyline':
+            element = '<polyline points="{}"'.format(
+                " ".join(["{},{}".format(point[0], point[1]) for point in value['points']])
+            )
+        elif key == 'polygon':
+            element = '<polygon points="{}"'.format(
+                " ".join(["{},{}".format(point[0], point[1]) for point in value['points']])
+            )
+        elif key == 'text':
+            element = '<text x="{}" y="{}"'.format(
+                value['at'][0],
+                value['at'][1]
+            )
+            if 'font-family' in value:
+                element += ' font-family="{}"'.format(value['font-family'])
+            if 'font-size' in value:
+                element += ' font-size="{}"'.format(value['font-size'])
+        for par in common:
+            if par in value:
+                element += ' {}="{}"'.format(
+                    par,
+                    value[par]
+                )
+        if key == 'text':
+            element += '>{}</text>'.format(value['text'])
+        else:
+            element += '/>'
+        shapes.append(element)
+
+    return "{}{}\n</svg>".format(canvas, "\n".join(shapes))
+
+
 
 if __name__ == '__main__':
     print(parse('''size height=400, width=500

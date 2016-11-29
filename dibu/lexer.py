@@ -3,16 +3,16 @@ import ply.lex as lex
 """
 Lista de tokens
 
-El analizador léxico de PLY (al llamar al método lex.lex()) va a buscar
-para cada uno de estos tokens una variable "t_TOKEN" en el módulo actual.
+El analizador lexico de PLY (al llamar al metodo lex.lex()) va a buscar
+para cada uno de estos tokens una variable "t_TOKEN" en el modulo actual.
 
 t_TOKEN puede ser:
 
-- Una expresión regular
-- Una función cuyo docstring sea una expresión regular (bizarro).
+- Una expresion regular
+- Una funcion cuyo docstring sea una expresion regular (bizarro).
 
 En el segundo caso, podemos hacer algunas cosas "extras", como quedarnos
-con algún valor de ese elemento.
+con algun valor de ese elemento.
 
 """
 
@@ -72,7 +72,7 @@ lexer = lex.lex()
 
 
 def apply(string):
-    u"""Aplica el análisis léxico al string dado."""
+    u"""Aplica el analisis lexico al string dado."""
     lex.input(string)
 
     return list(lexer)
