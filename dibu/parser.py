@@ -6,7 +6,7 @@ from .parser_rules import *
 
 def parse(text, debug=False):
     lexer = lex.lex(debug=debug)
-    parser = yacc.yacc(debug=debug)
+    parser = yacc.yacc(method='SLR', debug=debug)
     document = parser.parse(text, lexer)
 
     canvas = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">'
