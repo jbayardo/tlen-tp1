@@ -86,7 +86,7 @@ def p_statement(subexpressions):
         if subexpressions[2][0] == 'size':
             for entry in subexpressions[1]:
                 if entry[0] == 'size':
-                    raise SemanticException("Size defined twice.")
+                    raise SemanticException("Line {}: Size defined twice.".format(subexpressions.lexer.lineno))
     else:
         subexpressions[0] = [subexpressions[1]]
 
@@ -103,7 +103,8 @@ def p_expression(subexpressions):
             unmet_requirements.append(key)
 
     if len(unmet_requirements) > 0:
-        raise SemanticException("Parameters {} need to be defined for {}".format(unmet_requirements, identifier))
+        raise SemanticException(
+            "Line {}: Parameters {} need to be defined for {}".format( subexpressions.lexer.lineno - 1, unmet_requirements, identifier))
 
     # Check types and key validity
     for key in arguments:
@@ -111,20 +112,20 @@ def p_expression(subexpressions):
             if type_assert(arguments[key], common[key]):
                 return
             raise SemanticException(
-                "Type of parameter {} for {} is {}, not {}".format(key, identifier, common[key], arguments[key]))
+                "Line {}: Type of parameter {} for {} is {}, not {}".format( subexpressions.lexer.lineno - 1, key, identifier, common[key], arguments[key]))
         elif key in required[identifier]:
             if type_assert(arguments[key], required[identifier][key]):
                 return
             raise SemanticException(
-                "Type of parameter {} for {} is {}, not {}".format(key, identifier, required[key], arguments[key]))
+                "Line {}: Type of parameter {} for {} is {}, not {}".format( subexpressions.lexer.lineno - 1, key, identifier, required[key], arguments[key]))
         elif identifier in optional and key in optional[identifier]:
             if type_assert(arguments[key], optional[identifier][key]):
                 return
             raise SemanticException(
-                "Type of parameter {} for {} is {}, not {}".format(key, identifier, optional[identifier][key],
-                                                                   arguments[key]))
+                "Line {}: Type of parameter {} for {} is {}, not {}".format( subexpressions.lexer.lineno - 1, key, identifier, optional[identifier][key], arguments[key]))
         else:
-            raise SemanticException("Unknown parameter {} for {}.".format(key, identifier))
+            raise SemanticException(
+                "Line {}: Unknown parameter {} for {}.".format( subexpressions.lexer.lineno - 1, key, identifier))
 
 
 def p_key_value_list(subexpressions):

@@ -9,12 +9,12 @@ def parse(text, debug=False):
     parser = yacc.yacc(debug=debug)
     document = parser.parse(text, lexer)
 
-    canvas = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">\n'
+    canvas = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">'
     shapes = []
 
     for key, value in reversed(document):
         if key == 'size':
-            canvas = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="{}" height="{}">\n'.format(value['width'], value['height'])
+            canvas = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="{}" height="{}">'.format(value['width'], value['height'])
             continue
         if key == 'rectangle':
             element = '<rect x="{}" y="{}" height="{}" width="{}"'.format(
@@ -71,5 +71,4 @@ def parse(text, debug=False):
         else:
             element += '/>'
         shapes.append(element)
-
-    return "{}{}\n</svg>".format(canvas, "\n".join(shapes))
+    return "{}{}</svg>".format(canvas, "".join(shapes))
