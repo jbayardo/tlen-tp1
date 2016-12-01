@@ -22,7 +22,7 @@ def t_error(token):
 
 
 t_IDENTIFIER = r'(size|rectangle|line|circle|ellipse|polyline|polygon|text)'
-t_STRING = r'\"([^\\\n]|(\\.))*?\"'
+t_STRING = r'\"([^\\\n]|(\\.))*?(?<!\\)"'
 t_KEY = r'\w[\w\d_-]*'
 t_COMMA = r","
 t_EQUALS = r"="

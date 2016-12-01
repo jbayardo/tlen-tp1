@@ -135,6 +135,9 @@ def p_key_value_list(subexpressions):
     kv = subexpressions[1]
 
     if len(subexpressions) == 4:
+        for key in subexpressions.slice[3].value:
+            if key in kv:
+                raise SemanticException('Double definition for key {}'.format(key))
         kv.update(subexpressions.slice[3].value)
 
     subexpressions[0] = kv
