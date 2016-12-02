@@ -37,13 +37,18 @@ optional = {
     'text': {
         'font-family': str,
         'font-size': str
+    },
+    'rectangle': {
+        'rx': int,
+        'ry': int
     }
 }
 
 common = {
     'fill': str,
     'stroke': str,
-    'stroke-width': int
+    'stroke-width': int,
+    'style': str
 }
 
 
@@ -105,22 +110,21 @@ def p_expression(subexpressions):
     if len(unmet_requirements) > 0:
         raise SemanticException(
             "Line {}: Parameters {} need to be defined for {}".format( subexpressions.lexer.lineno - 1, unmet_requirements, identifier))
-
     # Check types and key validity
     for key in arguments:
         if key in common:
             if type_assert(arguments[key], common[key]):
-                return
+                continue
             raise SemanticException(
                 "Line {}: Type of parameter {} for {} is {}, not {}".format( subexpressions.lexer.lineno - 1, key, identifier, common[key], arguments[key]))
         elif key in required[identifier]:
             if type_assert(arguments[key], required[identifier][key]):
-                return
+                continue
             raise SemanticException(
                 "Line {}: Type of parameter {} for {} is {}, not {}".format( subexpressions.lexer.lineno - 1, key, identifier, required[key], arguments[key]))
         elif identifier in optional and key in optional[identifier]:
             if type_assert(arguments[key], optional[identifier][key]):
-                return
+                continue
             raise SemanticException(
                 "Line {}: Type of parameter {} for {} is {}, not {}".format( subexpressions.lexer.lineno - 1, key, identifier, optional[identifier][key], arguments[key]))
         else:

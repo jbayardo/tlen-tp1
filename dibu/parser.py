@@ -2,7 +2,7 @@ import ply.yacc as yacc
 import ply.lex as lex
 from .lexer_rules import *
 from .parser_rules import *
-
+import sys
 
 def parse(text, debug=False):
     lexer = lex.lex(debug=debug)
@@ -23,6 +23,10 @@ def parse(text, debug=False):
                 value['height'],
                 value['width']
             )
+            if value.get('rx', False):
+                element += ' rx="{}"'.format(value['rx'])
+            if value.get('ry', False):
+                element += ' ry="{}"'.format(value['ry'])
         elif key == 'line':
             element = '<line x1="{}" y1="{}" x2="{}" y2="{}"'.format(
                 value['from'][0],
@@ -72,3 +76,6 @@ def parse(text, debug=False):
             element += '/>'
         shapes.append(element)
     return "{}{}</svg>".format(canvas, "".join(shapes))
+
+if __name__ == '__main__':
+    print(parse(sys.argv[1]))
